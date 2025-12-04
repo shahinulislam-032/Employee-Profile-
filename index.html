@@ -3,512 +3,832 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Employee Profile & Attendance Management System">
-    <title>Employee Attendance System</title>
-    <link rel="stylesheet" href="styles.css">
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <title>Employee Dashboard - All Profiles</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.2em;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #c33;
+        }
+
+        /* Home Page - Employee Cards Grid */
+        .employees-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .employee-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .employee-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .employee-card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .employee-avatar {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5em;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .employee-info h3 {
+            color: #333;
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+
+        .employee-info p {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        .employee-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .stat-item {
+            background: #f8f9ff;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        .view-details-btn {
+            margin-top: 15px;
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .view-details-btn:hover {
+            transform: scale(1.02);
+        }
+
+        /* Individual Dashboard */
+        .dashboard-view {
+            display: none;
+        }
+
+        .back-button {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-button:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .profile-info {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .profile-details h2 {
+            color: #333;
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .profile-details p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h3 {
+            color: #333;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .leave-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .leave-item {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .leave-item h4 {
+            color: #667eea;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .leave-item .leave-count {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .leave-item .available {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .leave-item .total {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        .leave-used {
+            margin-top: 5px;
+            font-size: 0.85em;
+            color: #e74c3c;
+        }
+
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .attendance-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .attendance-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+
+        .attendance-table tr:hover {
+            background: #f8f9ff;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .summary-card h4 {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .summary-card .value {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .employees-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .leave-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .employee-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="app-header">
-        <div class="container header-content">
-            <div class="header-left">
-                <h1 class="app-title">📊 Attendance Manager</h1>
-                <div class="employee-selector">
-                    <label for="employee-select" class="sr-only">Select Employee</label>
-                    <select id="employee-select" aria-label="Select Employee">
-                        <option value="">Loading employees...</option>
-                    </select>
-                </div>
-            </div>
-            <div class="header-right">
-                <div class="datetime-display" id="current-datetime" aria-live="polite">
-                    <span class="date"></span>
-                    <span class="time"></span>
-                </div>
-            </div>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Employee Profile Dashboard</h1>
+            <p>Track attendance, leaves, and work hours in real-time</p>
         </div>
-        <nav class="main-nav">
-            <div class="container">
-                <ul class="nav-list">
-                    <li><a href="#dashboard" class="nav-link active" data-page="dashboard">Dashboard</a></li>
-                    <li><a href="#attendance" class="nav-link" data-page="attendance">Attendance</a></li>
-                    <li><a href="#leaves" class="nav-link" data-page="leaves">Leaves</a></li>
-                    <li><a href="#settings" class="nav-link" data-page="settings">Settings</a></li>
-                </ul>
-            </div>
-        </nav>
-    </header>
 
-    <!-- Main Content -->
-    <main class="app-main">
-        <div class="container">
-            <!-- Loading State -->
-            <div id="loading-overlay" class="loading-overlay hidden">
-                <div class="spinner"></div>
-                <p>Loading...</p>
-            </div>
+        <div id="loadingMessage" class="loading">📊 Loading employee data...</div>
+        <div id="errorMessage" class="error" style="display: none;"></div>
 
-            <!-- Toast Notifications -->
-            <div id="toast-container" class="toast-container" aria-live="polite"></div>
+        <!-- Home View - All Employees -->
+        <div id="homeView" style="display: none;">
+            <div class="employees-grid" id="employeesGrid"></div>
+        </div>
 
-            <!-- Dashboard Page -->
-            <section id="page-dashboard" class="page-content active">
-                <!-- Employee Profile Card -->
-                <div class="employee-profile-card">
-                    <div class="profile-avatar">
-                        <img id="profile-photo" src="" alt="Employee Photo">
-                    </div>
-                    <div class="profile-info">
-                        <h2 id="profile-name">-</h2>
-                        <div class="profile-details">
-                            <span id="profile-id" class="badge">ID: -</span>
-                            <span id="profile-department" class="badge">-</span>
-                            <span id="profile-role" class="badge">-</span>
-                        </div>
+        <!-- Individual Dashboard View -->
+        <div id="dashboardView" class="dashboard-view">
+            <button class="back-button" onclick="showHome()">← Back to All Employees</button>
+            
+            <div class="profile-info">
+                <div class="profile-header">
+                    <div class="profile-avatar" id="employeeAvatar">?</div>
+                    <div class="profile-details">
+                        <h2 id="employeeName">-</h2>
+                        <p>Employee ID: <strong id="employeeId">-</strong></p>
                     </div>
                 </div>
+            </div>
 
-                <!-- Today's Status -->
-                <div class="dashboard-section">
-                    <h3>Today's Status</h3>
-                    <div class="today-status-grid">
-                        <div class="stat-card">
-                            <div class="stat-icon">🕐</div>
-                            <div class="stat-content">
-                                <span class="stat-label">Clock In</span>
-                                <span class="stat-value" id="today-clockin">--:--</span>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">🕔</div>
-                            <div class="stat-content">
-                                <span class="stat-label">Clock Out</span>
-                                <span class="stat-value" id="today-clockout">--:--</span>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">⏱️</div>
-                            <div class="stat-content">
-                                <span class="stat-label">Total Hours</span>
-                                <span class="stat-value" id="today-hours">0.00h</span>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">🏠</div>
-                            <div class="stat-content">
-                                <span class="stat-label">WFH Today</span>
-                                <span class="stat-value" id="today-wfh">No</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="quick-actions">
-                        <button id="btn-clockin-now" class="btn btn-primary">Clock In Now</button>
-                        <button id="btn-clockout-now" class="btn btn-secondary">Clock Out Now</button>
-                    </div>
-                </div>
-
-                <!-- Leave Summary -->
-                <div class="dashboard-section">
-                    <h3>Leave Summary <span id="leave-year" class="text-muted"></span></h3>
-                    <div class="leave-summary-grid">
-                        <div class="leave-card leave-annual">
+            <div class="dashboard-grid">
+                <!-- Leave Balance Card -->
+                <div class="card">
+                    <h3><span class="card-icon">🌴</span> Leave Balance</h3>
+                    <div class="leave-grid">
+                        <div class="leave-item">
                             <h4>Annual Leave</h4>
-                            <div class="leave-stats">
-                                <div class="leave-stat">
-                                    <span class="leave-label">Allocated</span>
-                                    <span class="leave-value" id="annual-allocated">15</span>
-                                </div>
-                                <div class="leave-stat">
-                                    <span class="leave-label">Used</span>
-                                    <span class="leave-value" id="annual-used">0</span>
-                                </div>
-                                <div class="leave-stat">
-                                    <span class="leave-label">Remaining</span>
-                                    <span class="leave-value leave-remaining" id="annual-remaining">15</span>
-                                </div>
+                            <div class="leave-count">
+                                <span class="available" id="annualAvailable">15</span>
+                                <span class="total">/ 15</span>
                             </div>
-                            <div class="leave-progress">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="annual-progress" style="width: 0%"></div>
-                                </div>
-                            </div>
+                            <div class="leave-used" id="annualUsed">Used: 0 days</div>
                         </div>
-                        <div class="leave-card leave-casual">
+                        <div class="leave-item">
                             <h4>Casual Leave</h4>
-                            <div class="leave-stats">
-                                <div class="leave-stat">
-                                    <span class="leave-label">Allocated</span>
-                                    <span class="leave-value" id="casual-allocated">10</span>
-                                </div>
-                                <div class="leave-stat">
-                                    <span class="leave-label">Used</span>
-                                    <span class="leave-value" id="casual-used">0</span>
-                                </div>
-                                <div class="leave-stat">
-                                    <span class="leave-label">Remaining</span>
-                                    <span class="leave-value leave-remaining" id="casual-remaining">10</span>
-                                </div>
+                            <div class="leave-count">
+                                <span class="available" id="casualAvailable">10</span>
+                                <span class="total">/ 10</span>
                             </div>
-                            <div class="leave-progress">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="casual-progress" style="width: 0%"></div>
-                                </div>
-                            </div>
+                            <div class="leave-used" id="casualUsed">Used: 0 days</div>
                         </div>
-                        <div class="leave-card leave-sick">
+                        <div class="leave-item">
                             <h4>Sick Leave</h4>
-                            <div class="leave-stats">
-                                <div class="leave-stat">
-                                    <span class="leave-label">Allocated</span>
-                                    <span class="leave-value" id="sick-allocated">14</span>
-                                </div>
-                                <div class="leave-stat">
-                                    <span class="leave-label">Used</span>
-                                    <span class="leave-value" id="sick-used">0</span>
-                                </div>
-                                <div class="leave-stat">
-                                    <span class="leave-label">Remaining</span>
-                                    <span class="leave-value leave-remaining" id="sick-remaining">14</span>
-                                </div>
+                            <div class="leave-count">
+                                <span class="available" id="sickAvailable">14</span>
+                                <span class="total">/ 14</span>
                             </div>
-                            <div class="leave-progress">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="sick-progress" style="width: 0%"></div>
-                                </div>
-                            </div>
+                            <div class="leave-used" id="sickUsed">Used: 0 days</div>
                         </div>
-                        <div class="leave-card leave-wfh">
+                        <div class="leave-item">
                             <h4>Work From Home</h4>
-                            <div class="wfh-count">
-                                <span class="wfh-number" id="wfh-count">0</span>
-                                <span class="wfh-label">days this year</span>
+                            <div class="leave-count">
+                                <span class="available" id="wfhCount">0</span>
+                                <span class="total">days</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Charts -->
-                <div class="dashboard-section">
-                    <h3>Analytics</h3>
-                    <div class="charts-grid">
-                        <div class="chart-container">
-                            <h4>Leave Usage Overview</h4>
-                            <canvas id="leave-chart"></canvas>
+                <!-- Summary Cards -->
+                <div class="card">
+                    <h3><span class="card-icon">📊</span> Summary</h3>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div class="summary-card">
+                            <h4>Total Days</h4>
+                            <div class="value" id="totalDays">0</div>
                         </div>
-                        <div class="chart-container">
-                            <h4>Hours Trend (Last 30 Days)</h4>
-                            <canvas id="hours-chart"></canvas>
+                        <div class="summary-card">
+                            <h4>Avg Hours/Day</h4>
+                            <div class="value" id="avgHours">0</div>
                         </div>
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <!-- Attendance Page -->
-            <section id="page-attendance" class="page-content">
-                <div class="page-header">
-                    <h2>Attendance Records</h2>
-                    <button id="btn-add-attendance" class="btn btn-primary">+ Add Entry</button>
-                </div>
-
-                <!-- Filters -->
-                <div class="filters-panel">
-                    <div class="filter-group">
-                        <label for="filter-date-from">From Date</label>
-                        <input type="date" id="filter-date-from">
-                    </div>
-                    <div class="filter-group">
-                        <label for="filter-date-to">To Date</label>
-                        <input type="date" id="filter-date-to">
-                    </div>
-                    <div class="filter-group">
-                        <label for="filter-wfh">WFH</label>
-                        <select id="filter-wfh">
-                            <option value="">All</option>
-                            <option value="true">Yes</option>
-                            <option value="false">No</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label for="filter-leave-type">Leave Type</label>
-                        <select id="filter-leave-type">
-                            <option value="">All</option>
-                            <option value="None">No Leave</option>
-                            <option value="Annual">Annual</option>
-                            <option value="Casual">Casual</option>
-                            <option value="Sick">Sick</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label for="filter-min-hours">Min Hours</label>
-                        <input type="number" id="filter-min-hours" min="0" step="0.5" placeholder="0">
-                    </div>
-                    <div class="filter-group">
-                        <label for="filter-max-hours">Max Hours</label>
-                        <input type="number" id="filter-max-hours" min="0" step="0.5" placeholder="24">
-                    </div>
-                    <div class="filter-actions">
-                        <button id="btn-apply-filters" class="btn btn-secondary">Apply Filters</button>
-                        <button id="btn-clear-filters" class="btn btn-outline">Clear</button>
-                        <button id="btn-export-csv" class="btn btn-outline">📥 Export CSV</button>
-                    </div>
-                </div>
-
-                <!-- Attendance Table -->
-                <div class="table-wrapper">
-                    <table class="data-table" id="attendance-table">
+            <!-- Recent Attendance Card -->
+            <div class="card">
+                <h3><span class="card-icon">📅</span> Recent Attendance (Last 10 Days)</h3>
+                <div style="overflow-x: auto;">
+                    <table class="attendance-table">
                         <thead>
                             <tr>
-                                <th data-sort="date">Date <span class="sort-icon">⇅</span></th>
-                                <th data-sort="clockin">Clock In <span class="sort-icon">⇅</span></th>
-                                <th data-sort="clockout">Clock Out <span class="sort-icon">⇅</span></th>
-                                <th data-sort="break">Break (min) <span class="sort-icon">⇅</span></th>
-                                <th data-sort="hours">Total Hours <span class="sort-icon">⇅</span></th>
-                                <th>WFH</th>
-                                <th>Leave Type</th>
-                                <th>Notes</th>
-                                <th>Actions</th>
+                                <th>Date</th>
+                                <th>Clock In</th>
+                                <th>Clock Out</th>
+                                <th>Total Hours</th>
                             </tr>
                         </thead>
-                        <tbody id="attendance-tbody">
-                            <tr class="empty-state">
-                                <td colspan="9">No attendance records found</td>
+                        <tbody id="attendanceTableBody">
+                            <tr>
+                                <td colspan="4" class="no-data">No attendance data available</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-
-                <!-- Pagination -->
-                <div class="pagination" id="attendance-pagination">
-                    <button class="btn-page" id="btn-prev-page" disabled>← Previous</button>
-                    <span class="page-info" id="page-info">Page 1 of 1</span>
-                    <button class="btn-page" id="btn-next-page" disabled>Next →</button>
-                </div>
-            </section>
-
-            <!-- Leaves Page -->
-            <section id="page-leaves" class="page-content">
-                <div class="page-header">
-                    <h2>Leave Management</h2>
-                    <button id="btn-request-leave" class="btn btn-primary">+ Request Leave</button>
-                </div>
-
-                <!-- Leave Quotas Display -->
-                <div class="leave-quotas-display">
-                    <h3>Current Year Quotas</h3>
-                    <div class="quotas-grid">
-                        <div class="quota-item">
-                            <span class="quota-label">Annual Leave:</span>
-                            <span class="quota-value" id="quota-annual">15 days</span>
-                        </div>
-                        <div class="quota-item">
-                            <span class="quota-label">Casual Leave:</span>
-                            <span class="quota-value" id="quota-casual">10 days</span>
-                        </div>
-                        <div class="quota-item">
-                            <span class="quota-label">Sick Leave:</span>
-                            <span class="quota-value" id="quota-sick">14 days</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Leave History -->
-                <div class="leave-history">
-                    <h3>Leave History</h3>
-                    <div class="table-wrapper">
-                        <table class="data-table" id="leave-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Leave Type</th>
-                                    <th>Reason/Notes</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="leave-tbody">
-                                <tr class="empty-state">
-                                    <td colspan="4">No leave records found</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Settings Page -->
-            <section id="page-settings" class="page-content">
-                <div class="page-header">
-                    <h2>Settings (Admin)</h2>
-                </div>
-
-                <!-- Leave Quotas Settings -->
-                <div class="settings-section">
-                    <h3>Leave Quotas Configuration</h3>
-                    <form id="quotas-form" class="settings-form">
-                        <div class="form-group">
-                            <label for="setting-annual">Annual Leave (days)</label>
-                            <input type="number" id="setting-annual" min="0" max="50" value="15" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="setting-casual">Casual Leave (days)</label>
-                            <input type="number" id="setting-casual" min="0" max="50" value="10" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="setting-sick">Sick Leave (days)</label>
-                            <input type="number" id="setting-sick" min="0" max="50" value="14" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Save Quotas</button>
-                    </form>
-                </div>
-
-                <!-- Year Configuration -->
-                <div class="settings-section">
-                    <h3>Year Configuration</h3>
-                    <form id="year-config-form" class="settings-form">
-                        <div class="form-group">
-                            <label for="setting-year-start">Year Start Date</label>
-                            <input type="date" id="setting-year-start" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Update Year Start</button>
-                    </form>
-                </div>
-
-                <!-- Yearly Reset -->
-                <div class="settings-section danger-zone">
-                    <h3>⚠️ Yearly Reset</h3>
-                    <p class="warning-text">
-                        This will create new leave quotas for the upcoming year. Historical data will be preserved.
-                        Only run this at the beginning of a new year.
-                    </p>
-                    <button id="btn-yearly-reset" class="btn btn-danger">Perform Yearly Reset</button>
-                </div>
-
-                <!-- Sheet Connection -->
-                <div class="settings-section">
-                    <h3>Google Sheets Connection</h3>
-                    <form id="connection-form" class="settings-form">
-                        <div class="form-group">
-                            <label for="setting-base-url">Apps Script Web App URL</label>
-                            <input type="url" id="setting-base-url" placeholder="https://script.google.com/macros/s/.../exec" required>
-                            <small class="form-help">Update this in app.js CONFIG object</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="setting-sheet-id">Spreadsheet ID</label>
-                            <input type="text" id="setting-sheet-id" placeholder="1NAnpwv3hBYvyo1TOdLhUzIMT-ZpkzUm0m1T8MBQRbtY" required>
-                            <small class="form-help">From your Google Sheets URL</small>
-                        </div>
-                        <button type="submit" class="btn btn-secondary">Test Connection</button>
-                    </form>
-                </div>
-            </section>
-        </div>
-    </main>
-
-    <!-- Modal: Add/Edit Attendance -->
-    <div id="modal-attendance" class="modal" role="dialog" aria-labelledby="modal-attendance-title" aria-hidden="true">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modal-attendance-title">Add Attendance Entry</h3>
-                <button class="modal-close" aria-label="Close modal">&times;</button>
             </div>
-            <form id="attendance-form" class="modal-form">
-                <input type="hidden" id="form-attendance-id">
-                <div class="form-group">
-                    <label for="form-date">Date *</label>
-                    <input type="date" id="form-date" required>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="form-clockin">Clock In *</label>
-                        <input type="time" id="form-clockin" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="form-clockout">Clock Out *</label>
-                        <input type="time" id="form-clockout" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="form-break">Break (minutes)</label>
-                    <input type="number" id="form-break" min="0" value="0">
-                </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="form-wfh">
-                        Work From Home
-                    </label>
-                </div>
-                <div class="form-group">
-                    <label for="form-leave-type">Leave Type</label>
-                    <select id="form-leave-type">
-                        <option value="None">None</option>
-                        <option value="Annual">Annual</option>
-                        <option value="Casual">Casual</option>
-                        <option value="Sick">Sick</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="form-notes">Notes</label>
-                    <textarea id="form-notes" rows="3"></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline modal-cancel">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    <!-- Modal: Request Leave -->
-    <div id="modal-leave" class="modal" role="dialog" aria-labelledby="modal-leave-title" aria-hidden="true">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modal-leave-title">Request Leave</h3>
-                <button class="modal-close" aria-label="Close modal">&times;</button>
+            <!-- Leave History Card -->
+            <div class="card">
+                <h3><span class="card-icon">📋</span> Leave History</h3>
+                <div style="overflow-x: auto;">
+                    <table class="attendance-table">
+                        <thead>
+                            <tr>
+                                <th>Leave Type</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Total Days</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaveTableBody">
+                            <tr>
+                                <td colspan="4" class="no-data">No leave history available</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <form id="leave-form" class="modal-form">
-                <div class="form-group">
-                    <label for="leave-form-type">Leave Type *</label>
-                    <select id="leave-form-type" required>
-                        <option value="">Select Type</option>
-                        <option value="Annual">Annual Leave</option>
-                        <option value="Casual">Casual Leave</option>
-                        <option value="Sick">Sick Leave</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="leave-form-date">Date *</label>
-                    <input type="date" id="leave-form-date" required>
-                </div>
-                <div class="form-group">
-                    <label for="leave-form-reason">Reason *</label>
-                    <textarea id="leave-form-reason" rows="3" required></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline modal-cancel">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Submit Request</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    <!-- Modal: Confirm Dialog -->
-    <div id="modal-confirm" class="modal" role="dialog" aria-labelledby="modal-confirm-title" aria-hidden="true">
-        <div class="modal-content modal-small">
-            <div class="modal-header">
-                <h3 id="modal-confirm-title">Confirm Action</h3>
-                <button class="modal-close" aria-label="Close modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p id="modal-confirm-message"></p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline modal-cancel">Cancel</button>
-                <button id="modal-confirm-btn" class="btn btn-danger">Confirm</button>
+            <div style="text-align: center;">
+                <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
             </div>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        // Google Sheet ID - Use CSV export URL for public access without API
+        const SHEET_ID = '1NAnpwv3hBYvyo1TOdLhUzIMT-ZpkzUm0m1T8MBQRbtY';
+        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+
+        let allData = [];
+        let employees = new Map();
+        let currentEmployeeId = null;
+
+        // Convert Excel date serial number to JavaScript Date
+        function excelDateToJSDate(serial) {
+            const utc_days = Math.floor(serial - 25569);
+            const utc_value = utc_days * 86400;
+            const date_info = new Date(utc_value * 1000);
+            return new Date(date_info.getFullYear(), date_info.getMonth(), date_info.getDate());
+        }
+
+        // Format date to readable format
+        function formatDate(serial) {
+            const date = excelDateToJSDate(serial);
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        // Load data from Google Sheets using CSV export
+        async function loadData() {
+            try {
+                document.getElementById('loadingMessage').style.display = 'block';
+                document.getElementById('errorMessage').style.display = 'none';
+                document.getElementById('homeView').style.display = 'none';
+
+                // Fetch CSV data
+                const response = await fetch(CSV_URL);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data from Google Sheets. Please ensure the sheet is set to "Anyone with the link can view".');
+                }
+
+                const csvText = await response.text();
+                allData = parseCSV(csvText);
+
+                // Parse data and organize by employee
+                parseEmployeeData();
+
+                // Display all employees
+                displayAllEmployees();
+
+                document.getElementById('loadingMessage').style.display = 'none';
+                document.getElementById('homeView').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('loadingMessage').style.display = 'none';
+                document.getElementById('errorMessage').textContent = '❌ ' + error.message;
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        }
+
+        // Parse CSV text to array
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n');
+            const result = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                // Simple CSV parsing (handles basic cases)
+                const values = line.split(',').map(val => val.trim().replace(/^"|"$/g, ''));
+                result.push(values);
+            }
+            
+            return result;
+        }
+
+        function parseEmployeeData() {
+            employees.clear();
+
+            // Skip header row
+            for (let i = 1; i < allData.length; i++) {
+                const row = allData[i];
+                const empId = row[0];
+                const empName = row[1];
+
+                if (!empId || !empName) continue;
+
+                if (!employees.has(empId)) {
+                    employees.set(empId, {
+                        id: empId,
+                        name: empName,
+                        attendance: [],
+                        leaves: []
+                    });
+                }
+
+                const employee = employees.get(empId);
+
+                // Parse attendance data
+                if (row[2] && row[3] && row[4] && row[5]) { // Date, Clock In, Clock Out, Total Hours
+                    employee.attendance.push({
+                        date: row[2],
+                        clockIn: row[3],
+                        clockOut: row[4],
+                        totalHours: row[5]
+                    });
+                }
+
+                // Parse leave data
+                if (row[6] && row[7] && row[8] && row[9]) { // Leave Type, Start, End, Total Days
+                    employee.leaves.push({
+                        type: row[6],
+                        startDate: row[7],
+                        endDate: row[8],
+                        totalDays: parseFloat(row[9]) || 0
+                    });
+                }
+            }
+        }
+
+        // Display all employees in grid
+        function displayAllEmployees() {
+            const grid = document.getElementById('employeesGrid');
+            grid.innerHTML = '';
+
+            employees.forEach((employee, empId) => {
+                // Calculate statistics
+                const totalDays = employee.attendance.length;
+                let totalSeconds = 0;
+                
+                employee.attendance.forEach(att => {
+                    const timeParts = att.totalHours.split(':');
+                    if (timeParts.length === 3) {
+                        totalSeconds += parseInt(timeParts[0]) * 3600 + parseInt(timeParts[1]) * 60 + parseInt(timeParts[2]);
+                    }
+                });
+                
+                const avgSeconds = totalDays > 0 ? totalSeconds / totalDays : 0;
+                const avgHours = (avgSeconds / 3600).toFixed(1);
+
+                // Calculate total leave used
+                let totalLeaveUsed = 0;
+                employee.leaves.forEach(leave => {
+                    totalLeaveUsed += leave.totalDays;
+                });
+
+                // Create employee card
+                const card = document.createElement('div');
+                card.className = 'employee-card';
+                card.innerHTML = `
+                    <div class="employee-card-header">
+                        <div class="employee-avatar">${employee.name.charAt(0).toUpperCase()}</div>
+                        <div class="employee-info">
+                            <h3>${employee.name}</h3>
+                            <p>ID: ${employee.id}</p>
+                        </div>
+                    </div>
+                    <div class="employee-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">${totalDays}</div>
+                            <div class="stat-label">Days Present</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${avgHours}h</div>
+                            <div class="stat-label">Avg Hours/Day</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${totalLeaveUsed}</div>
+                            <div class="stat-label">Leaves Taken</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${39 - totalLeaveUsed}</div>
+                            <div class="stat-label">Leaves Available</div>
+                        </div>
+                    </div>
+                    <button class="view-details-btn" onclick="viewEmployeeDashboard('${empId}')">
+                        View Full Dashboard →
+                    </button>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        // Show individual employee dashboard
+        function viewEmployeeDashboard(empId) {
+            currentEmployeeId = empId;
+            const employee = employees.get(empId);
+            if (!employee) return;
+
+            // Hide home, show dashboard
+            document.getElementById('homeView').style.display = 'none';
+            document.getElementById('dashboardView').style.display = 'block';
+
+            // Update profile info
+            document.getElementById('employeeId').textContent = employee.id;
+            document.getElementById('employeeName').textContent = employee.name;
+            document.getElementById('employeeAvatar').textContent = employee.name.charAt(0).toUpperCase();
+
+            // Calculate leave balances
+            const leaveTotals = {
+                'Annual Leave': 15,
+                'Casual Leave': 10,
+                'Sick Leave': 14,
+                'Work From Home': 0
+            };
+
+            const leaveUsed = {
+                'Annual Leave': 0,
+                'Casual Leave': 0,
+                'Sick Leave': 0,
+                'Work From Home': 0
+            };
+
+            employee.leaves.forEach(leave => {
+                const leaveType = leave.type.trim();
+                if (leaveUsed.hasOwnProperty(leaveType)) {
+                    leaveUsed[leaveType] += leave.totalDays;
+                }
+            });
+
+            // Update leave displays
+            document.getElementById('annualAvailable').textContent = leaveTotals['Annual Leave'] - leaveUsed['Annual Leave'];
+            document.getElementById('annualUsed').textContent = `Used: ${leaveUsed['Annual Leave']} days`;
+
+            document.getElementById('casualAvailable').textContent = leaveTotals['Casual Leave'] - leaveUsed['Casual Leave'];
+            document.getElementById('casualUsed').textContent = `Used: ${leaveUsed['Casual Leave']} days`;
+
+            document.getElementById('sickAvailable').textContent = leaveTotals['Sick Leave'] - leaveUsed['Sick Leave'];
+            document.getElementById('sickUsed').textContent = `Used: ${leaveUsed['Sick Leave']} days`;
+
+            document.getElementById('wfhCount').textContent = leaveUsed['Work From Home'];
+
+            // Update summary
+            document.getElementById('totalDays').textContent = employee.attendance.length;
+
+            // Calculate average hours
+            let totalSeconds = 0;
+            employee.attendance.forEach(att => {
+                const timeParts = att.totalHours.split(':');
+                if (timeParts.length === 3) {
+                    totalSeconds += parseInt(timeParts[0]) * 3600 + parseInt(timeParts[1]) * 60 + parseInt(timeParts[2]);
+                }
+            });
+            const avgSeconds = employee.attendance.length > 0 ? totalSeconds / employee.attendance.length : 0;
+            const avgHours = (avgSeconds / 3600).toFixed(1);
+            document.getElementById('avgHours').textContent = avgHours;
+
+            // Update attendance table (last 10 days)
+            const attendanceBody = document.getElementById('attendanceTableBody');
+            attendanceBody.innerHTML = '';
+
+            const recentAttendance = employee.attendance.slice(-10).reverse();
+            if (recentAttendance.length > 0) {
+                recentAttendance.forEach(att => {
+                    const row = attendanceBody.insertRow();
+                    row.insertCell(0).textContent = formatDate(att.date);
+                    row.insertCell(1).textContent = att.clockIn;
+                    row.insertCell(2).textContent = att.clockOut;
+                    row.insertCell(3).textContent = att.totalHours;
+                });
+            } else {
+                const row = attendanceBody.insertRow();
+                const cell = row.insertCell(0);
+                cell.colSpan = 4;
+                cell.className = 'no-data';
+                cell.textContent = 'No attendance data available';
+            }
+
+            // Update leave table
+            const leaveBody = document.getElementById('leaveTableBody');
+            leaveBody.innerHTML = '';
+
+            if (employee.leaves.length > 0) {
+                employee.leaves.forEach(leave => {
+                    const row = leaveBody.insertRow();
+                    row.insertCell(0).textContent = leave.type;
+                    row.insertCell(1).textContent = formatDate(leave.startDate);
+                    row.insertCell(2).textContent = formatDate(leave.endDate);
+                    row.insertCell(3).textContent = leave.totalDays;
+                });
+            } else {
+                const row = leaveBody.insertRow();
+                const cell = row.insertCell(0);
+                cell.colSpan = 4;
+                cell.className = 'no-data';
+                cell.textContent = 'No leave history available';
+            }
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        // Show home view
+        function showHome() {
+            document.getElementById('dashboardView').style.display = 'none';
+            document.getElementById('homeView').style.display = 'block';
+            currentEmployeeId = null;
+            window.scrollTo(0, 0);
+        }
+
+        // Load data on page load
+        window.addEventListener('DOMContentLoaded', loadData);
+    </script>
 </body>
 </html>
