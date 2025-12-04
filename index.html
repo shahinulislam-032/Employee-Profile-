@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Employee Profile & Attendance Management System">
+    <title>Employee Attendance System</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="container header-content">
+            <div class="header-left">
+                <h1 class="app-title">📊 Attendance Manager</h1>
+                <div class="employee-selector">
+                    <label for="employee-select" class="sr-only">Select Employee</label>
+                    <select id="employee-select" aria-label="Select Employee">
+                        <option value="">Loading employees...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="datetime-display" id="current-datetime" aria-live="polite">
+                    <span class="date"></span>
+                    <span class="time"></span>
+                </div>
+            </div>
+        </div>
+        <nav class="main-nav">
+            <div class="container">
+                <ul class="nav-list">
+                    <li><a href="#dashboard" class="nav-link active" data-page="dashboard">Dashboard</a></li>
+                    <li><a href="#attendance" class="nav-link" data-page="attendance">Attendance</a></li>
+                    <li><a href="#leaves" class="nav-link" data-page="leaves">Leaves</a></li>
+                    <li><a href="#settings" class="nav-link" data-page="settings">Settings</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-main">
+        <div class="container">
+            <!-- Loading State -->
+            <div id="loading-overlay" class="loading-overlay hidden">
+                <div class="spinner"></div>
+                <p>Loading...</p>
+            </div>
+
+            <!-- Toast Notifications -->
+            <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+            <!-- Dashboard Page -->
+            <section id="page-dashboard" class="page-content active">
+                <!-- Employee Profile Card -->
+                <div class="employee-profile-card">
+                    <div class="profile-avatar">
+                        <img id="profile-photo" src="" alt="Employee Photo">
+                    </div>
+                    <div class="profile-info">
+                        <h2 id="profile-name">-</h2>
+                        <div class="profile-details">
+                            <span id="profile-id" class="badge">ID: -</span>
+                            <span id="profile-department" class="badge">-</span>
+                            <span id="profile-role" class="badge">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Status -->
+                <div class="dashboard-section">
+                    <h3>Today's Status</h3>
+                    <div class="today-status-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">🕐</div>
+                            <div class="stat-content">
+                                <span class="stat-label">Clock In</span>
+                                <span class="stat-value" id="today-clockin">--:--</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">🕔</div>
+                            <div class="stat-content">
+                                <span class="stat-label">Clock Out</span>
+                                <span class="stat-value" id="today-clockout">--:--</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">⏱️</div>
+                            <div class="stat-content">
+                                <span class="stat-label">Total Hours</span>
+                                <span class="stat-value" id="today-hours">0.00h</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">🏠</div>
+                            <div class="stat-content">
+                                <span class="stat-label">WFH Today</span>
+                                <span class="stat-value" id="today-wfh">No</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quick-actions">
+                        <button id="btn-clockin-now" class="btn btn-primary">Clock In Now</button>
+                        <button id="btn-clockout-now" class="btn btn-secondary">Clock Out Now</button>
+                    </div>
+                </div>
+
+                <!-- Leave Summary -->
+                <div class="dashboard-section">
+                    <h3>Leave Summary <span id="leave-year" class="text-muted"></span></h3>
+                    <div class="leave-summary-grid">
+                        <div class="leave-card leave-annual">
+                            <h4>Annual Leave</h4>
+                            <div class="leave-stats">
+                                <div class="leave-stat">
+                                    <span class="leave-label">Allocated</span>
+                                    <span class="leave-value" id="annual-allocated">15</span>
+                                </div>
+                                <div class="leave-stat">
+                                    <span class="leave-label">Used</span>
+                                    <span class="leave-value" id="annual-used">0</span>
+                                </div>
+                                <div class="leave-stat">
+                                    <span class="leave-label">Remaining</span>
+                                    <span class="leave-value leave-remaining" id="annual-remaining">15</span>
+                                </div>
+                            </div>
+                            <div class="leave-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="annual-progress" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="leave-card leave-casual">
+                            <h4>Casual Leave</h4>
+                            <div class="leave-stats">
+                                <div class="leave-stat">
+                                    <span class="leave-label">Allocated</span>
+                                    <span class="leave-value" id="casual-allocated">10</span>
+                                </div>
+                                <div class="leave-stat">
+                                    <span class="leave-label">Used</span>
+                                    <span class="leave-value" id="casual-used">0</span>
+                                </div>
+                                <div class="leave-stat">
+                                    <span class="leave-label">Remaining</span>
+                                    <span class="leave-value leave-remaining" id="casual-remaining">10</span>
+                                </div>
+                            </div>
+                            <div class="leave-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="casual-progress" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="leave-card leave-sick">
+                            <h4>Sick Leave</h4>
+                            <div class="leave-stats">
+                                <div class="leave-stat">
+                                    <span class="leave-label">Allocated</span>
+                                    <span class="leave-value" id="sick-allocated">14</span>
+                                </div>
+                                <div class="leave-stat">
+                                    <span class="leave-label">Used</span>
+                                    <span class="leave-value" id="sick-used">0</span>
+                                </div>
+                                <div class="leave-stat">
+                                    <span class="leave-label">Remaining</span>
+                                    <span class="leave-value leave-remaining" id="sick-remaining">14</span>
+                                </div>
+                            </div>
+                            <div class="leave-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="sick-progress" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="leave-card leave-wfh">
+                            <h4>Work From Home</h4>
+                            <div class="wfh-count">
+                                <span class="wfh-number" id="wfh-count">0</span>
+                                <span class="wfh-label">days this year</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="dashboard-section">
+                    <h3>Analytics</h3>
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <h4>Leave Usage Overview</h4>
+                            <canvas id="leave-chart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h4>Hours Trend (Last 30 Days)</h4>
+                            <canvas id="hours-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Attendance Page -->
+            <section id="page-attendance" class="page-content">
+                <div class="page-header">
+                    <h2>Attendance Records</h2>
+                    <button id="btn-add-attendance" class="btn btn-primary">+ Add Entry</button>
+                </div>
+
+                <!-- Filters -->
+                <div class="filters-panel">
+                    <div class="filter-group">
+                        <label for="filter-date-from">From Date</label>
+                        <input type="date" id="filter-date-from">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-date-to">To Date</label>
+                        <input type="date" id="filter-date-to">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-wfh">WFH</label>
+                        <select id="filter-wfh">
+                            <option value="">All</option>
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-leave-type">Leave Type</label>
+                        <select id="filter-leave-type">
+                            <option value="">All</option>
+                            <option value="None">No Leave</option>
+                            <option value="Annual">Annual</option>
+                            <option value="Casual">Casual</option>
+                            <option value="Sick">Sick</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-min-hours">Min Hours</label>
+                        <input type="number" id="filter-min-hours" min="0" step="0.5" placeholder="0">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-max-hours">Max Hours</label>
+                        <input type="number" id="filter-max-hours" min="0" step="0.5" placeholder="24">
+                    </div>
+                    <div class="filter-actions">
+                        <button id="btn-apply-filters" class="btn btn-secondary">Apply Filters</button>
+                        <button id="btn-clear-filters" class="btn btn-outline">Clear</button>
+                        <button id="btn-export-csv" class="btn btn-outline">📥 Export CSV</button>
+                    </div>
+                </div>
+
+                <!-- Attendance Table -->
+                <div class="table-wrapper">
+                    <table class="data-table" id="attendance-table">
+                        <thead>
+                            <tr>
+                                <th data-sort="date">Date <span class="sort-icon">⇅</span></th>
+                                <th data-sort="clockin">Clock In <span class="sort-icon">⇅</span></th>
+                                <th data-sort="clockout">Clock Out <span class="sort-icon">⇅</span></th>
+                                <th data-sort="break">Break (min) <span class="sort-icon">⇅</span></th>
+                                <th data-sort="hours">Total Hours <span class="sort-icon">⇅</span></th>
+                                <th>WFH</th>
+                                <th>Leave Type</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-tbody">
+                            <tr class="empty-state">
+                                <td colspan="9">No attendance records found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" id="attendance-pagination">
+                    <button class="btn-page" id="btn-prev-page" disabled>← Previous</button>
+                    <span class="page-info" id="page-info">Page 1 of 1</span>
+                    <button class="btn-page" id="btn-next-page" disabled>Next →</button>
+                </div>
+            </section>
+
+            <!-- Leaves Page -->
+            <section id="page-leaves" class="page-content">
+                <div class="page-header">
+                    <h2>Leave Management</h2>
+                    <button id="btn-request-leave" class="btn btn-primary">+ Request Leave</button>
+                </div>
+
+                <!-- Leave Quotas Display -->
+                <div class="leave-quotas-display">
+                    <h3>Current Year Quotas</h3>
+                    <div class="quotas-grid">
+                        <div class="quota-item">
+                            <span class="quota-label">Annual Leave:</span>
+                            <span class="quota-value" id="quota-annual">15 days</span>
+                        </div>
+                        <div class="quota-item">
+                            <span class="quota-label">Casual Leave:</span>
+                            <span class="quota-value" id="quota-casual">10 days</span>
+                        </div>
+                        <div class="quota-item">
+                            <span class="quota-label">Sick Leave:</span>
+                            <span class="quota-value" id="quota-sick">14 days</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leave History -->
+                <div class="leave-history">
+                    <h3>Leave History</h3>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="leave-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Leave Type</th>
+                                    <th>Reason/Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leave-tbody">
+                                <tr class="empty-state">
+                                    <td colspan="4">No leave records found</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Page -->
+            <section id="page-settings" class="page-content">
+                <div class="page-header">
+                    <h2>Settings (Admin)</h2>
+                </div>
+
+                <!-- Leave Quotas Settings -->
+                <div class="settings-section">
+                    <h3>Leave Quotas Configuration</h3>
+                    <form id="quotas-form" class="settings-form">
+                        <div class="form-group">
+                            <label for="setting-annual">Annual Leave (days)</label>
+                            <input type="number" id="setting-annual" min="0" max="50" value="15" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="setting-casual">Casual Leave (days)</label>
+                            <input type="number" id="setting-casual" min="0" max="50" value="10" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="setting-sick">Sick Leave (days)</label>
+                            <input type="number" id="setting-sick" min="0" max="50" value="14" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Quotas</button>
+                    </form>
+                </div>
+
+                <!-- Year Configuration -->
+                <div class="settings-section">
+                    <h3>Year Configuration</h3>
+                    <form id="year-config-form" class="settings-form">
+                        <div class="form-group">
+                            <label for="setting-year-start">Year Start Date</label>
+                            <input type="date" id="setting-year-start" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Year Start</button>
+                    </form>
+                </div>
+
+                <!-- Yearly Reset -->
+                <div class="settings-section danger-zone">
+                    <h3>⚠️ Yearly Reset</h3>
+                    <p class="warning-text">
+                        This will create new leave quotas for the upcoming year. Historical data will be preserved.
+                        Only run this at the beginning of a new year.
+                    </p>
+                    <button id="btn-yearly-reset" class="btn btn-danger">Perform Yearly Reset</button>
+                </div>
+
+                <!-- Sheet Connection -->
+                <div class="settings-section">
+                    <h3>Google Sheets Connection</h3>
+                    <form id="connection-form" class="settings-form">
+                        <div class="form-group">
+                            <label for="setting-base-url">Apps Script Web App URL</label>
+                            <input type="url" id="setting-base-url" placeholder="https://script.google.com/macros/s/.../exec" required>
+                            <small class="form-help">Update this in app.js CONFIG object</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="setting-sheet-id">Spreadsheet ID</label>
+                            <input type="text" id="setting-sheet-id" placeholder="1NAnpwv3hBYvyo1TOdLhUzIMT-ZpkzUm0m1T8MBQRbtY" required>
+                            <small class="form-help">From your Google Sheets URL</small>
+                        </div>
+                        <button type="submit" class="btn btn-secondary">Test Connection</button>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal: Add/Edit Attendance -->
+    <div id="modal-attendance" class="modal" role="dialog" aria-labelledby="modal-attendance-title" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-attendance-title">Add Attendance Entry</h3>
+                <button class="modal-close" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="attendance-form" class="modal-form">
+                <input type="hidden" id="form-attendance-id">
+                <div class="form-group">
+                    <label for="form-date">Date *</label>
+                    <input type="date" id="form-date" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="form-clockin">Clock In *</label>
+                        <input type="time" id="form-clockin" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-clockout">Clock Out *</label>
+                        <input type="time" id="form-clockout" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="form-break">Break (minutes)</label>
+                    <input type="number" id="form-break" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="form-wfh">
+                        Work From Home
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="form-leave-type">Leave Type</label>
+                    <select id="form-leave-type">
+                        <option value="None">None</option>
+                        <option value="Annual">Annual</option>
+                        <option value="Casual">Casual</option>
+                        <option value="Sick">Sick</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="form-notes">Notes</label>
+                    <textarea id="form-notes" rows="3"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline modal-cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Request Leave -->
+    <div id="modal-leave" class="modal" role="dialog" aria-labelledby="modal-leave-title" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-leave-title">Request Leave</h3>
+                <button class="modal-close" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="leave-form" class="modal-form">
+                <div class="form-group">
+                    <label for="leave-form-type">Leave Type *</label>
+                    <select id="leave-form-type" required>
+                        <option value="">Select Type</option>
+                        <option value="Annual">Annual Leave</option>
+                        <option value="Casual">Casual Leave</option>
+                        <option value="Sick">Sick Leave</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="leave-form-date">Date *</label>
+                    <input type="date" id="leave-form-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="leave-form-reason">Reason *</label>
+                    <textarea id="leave-form-reason" rows="3" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline modal-cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Confirm Dialog -->
+    <div id="modal-confirm" class="modal" role="dialog" aria-labelledby="modal-confirm-title" aria-hidden="true">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h3 id="modal-confirm-title">Confirm Action</h3>
+                <button class="modal-close" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="modal-confirm-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline modal-cancel">Cancel</button>
+                <button id="modal-confirm-btn" class="btn btn-danger">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
